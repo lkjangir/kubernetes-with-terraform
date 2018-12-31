@@ -1,0 +1,74 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeRegions"
+      ],
+      "Resource": [
+        "*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetBucketLocation",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::sds-kops-state-test"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:Get*"
+      ],
+      "Resource": [
+        "arn:aws:s3:::sds-kops-state-test/one.colabit.store/addons/*",
+        "arn:aws:s3:::sds-kops-state-test/one.colabit.store/cluster.spec",
+        "arn:aws:s3:::sds-kops-state-test/one.colabit.store/config",
+        "arn:aws:s3:::sds-kops-state-test/one.colabit.store/instancegroup/*",
+        "arn:aws:s3:::sds-kops-state-test/one.colabit.store/pki/issued/*",
+        "arn:aws:s3:::sds-kops-state-test/one.colabit.store/pki/private/kube-proxy/*",
+        "arn:aws:s3:::sds-kops-state-test/one.colabit.store/pki/private/kubelet/*",
+        "arn:aws:s3:::sds-kops-state-test/one.colabit.store/pki/ssh/*",
+        "arn:aws:s3:::sds-kops-state-test/one.colabit.store/secrets/dockerconfig"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:GetRepositoryPolicy",
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": [
+        "*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateNetworkInterface",
+        "ec2:AttachNetworkInterface",
+        "ec2:DeleteNetworkInterface",
+        "ec2:DetachNetworkInterface",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:DescribeInstances",
+        "ec2:ModifyNetworkInterfaceAttribute",
+        "ec2:AssignPrivateIpAddresses",
+        "tag:TagResources"
+      ],
+      "Resource": [
+        "*"
+      ]
+    }
+  ]
+}
