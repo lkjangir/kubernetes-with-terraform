@@ -20,7 +20,7 @@ set -o pipefail
 NODEUP_URL=https://kubeupv2.s3.amazonaws.com/kops/1.10.1/linux/amd64/nodeup
 NODEUP_HASH=dda0edf8335832e5e8038ac301dc8662a423cd6e
 
-export AWS_REGION=us-west-1
+export AWS_REGION=${region}
 
 
 
@@ -31,33 +31,33 @@ function ensure-install-dir() {
   if [[ -d /var/lib/toolbox ]]; then
     INSTALL_DIR="/var/lib/toolbox/kubernetes-install"
   fi
-  mkdir -p ${INSTALL_DIR}
-  cd ${INSTALL_DIR}
+  mkdir -p $${INSTALL_DIR}
+  cd $${INSTALL_DIR}
 }
 
 # Retry a download until we get it. Takes a hash and a set of URLs.
 #
-# $1 is the sha1 of the URL. Can be "" if the sha1 is unknown.
-# $2+ are the URLs to download.
+# $$1 is the sha1 of the URL. Can be "" if the sha1 is unknown.
+# $$2+ are the URLs to download.
 download-or-bust() {
-  local -r hash="$1"
+  local -r hash="$$1"
   shift 1
 
-  urls=( $* )
+  urls=( $$* )
   while true; do
-    for url in "${urls[@]}"; do
-      local file="${url##*/}"
+    for url in "$${urls[@]}"; do
+      local file="$${url##*/}"
 
-      if [[ -e "${file}" ]]; then
-        echo "== File exists for ${url} =="
-      elif [[ $(which curl) ]]; then
-        if ! curl -f --ipv4 -Lo "${file}" --connect-timeout 20 --retry 6 --retry-delay 10 "${url}"; then
-          echo "== Failed to curl ${url}. Retrying. =="
+      if [[ -e "$${file}" ]]; then
+        echo "== File exists for $${url} =="
+      elif [[ $$(which curl) ]]; then
+        if ! curl -f --ipv4 -Lo "$${file}" --connect-timeout 20 --retry 6 --retry-delay 10 "$${url}"; then
+          echo "== Failed to curl $${url}. Retrying. =="
           break
         fi
-      elif [[ $(which wget ) ]]; then
-        if ! wget --inet4-only -O "${file}" --connect-timeout=20 --tries=6 --wait=10 "${url}"; then
-          echo "== Failed to wget ${url}. Retrying. =="
+      elif [[ $$(which wget ) ]]; then
+        if ! wget --inet4-only -O "$${file}" --connect-timeout=20 --tries=6 --wait=10 "$${url}"; then
+          echo "== Failed to wget $${url}. Retrying. =="
           break
         fi
       else
@@ -65,14 +65,14 @@ download-or-bust() {
         break
       fi
 
-      if [[ -n "${hash}" ]] && ! validate-hash "${file}" "${hash}"; then
-        echo "== Hash validation of ${url} failed. Retrying. =="
-        rm -f "${file}"
+      if [[ -n "$${hash}" ]] && ! validate-hash "$${file}" "$${hash}"; then
+        echo "== Hash validation of $${url} failed. Retrying. =="
+        rm -f "$${file}"
       else
-        if [[ -n "${hash}" ]]; then
-          echo "== Downloaded ${url} (SHA1 = ${hash}) =="
+        if [[ -n "$${hash}" ]]; then
+          echo "== Downloaded $${url} (SHA1 = $${hash}) =="
         else
-          echo "== Downloaded ${url} =="
+          echo "== Downloaded $${url} =="
         fi
         return
       fi
@@ -84,38 +84,38 @@ download-or-bust() {
 }
 
 validate-hash() {
-  local -r file="$1"
-  local -r expected="$2"
+  local -r file="$$1"
+  local -r expected="$$2"
   local actual
 
-  actual=$(sha1sum ${file} | awk '{ print $1 }') || true
-  if [[ "${actual}" != "${expected}" ]]; then
-    echo "== ${file} corrupted, sha1 ${actual} doesn't match expected ${expected} =="
+  actual=$$(sha1sum $${file} | awk '{ print $$1 }') || true
+  if [[ "$${actual}" != "$${expected}" ]]; then
+    echo "== $${file} corrupted, sha1 $${actual} doesn't match expected $${expected} =="
     return 1
   fi
 }
 
 function split-commas() {
-  echo $1 | tr "," "\n"
+  echo $$1 | tr "," "\n"
 }
 
 function try-download-release() {
   # TODO(zmerlynn): Now we REALLY have no excuse not to do the reboot
   # optimization.
 
-  local -r nodeup_urls=( $(split-commas "${NODEUP_URL}") )
-  local -r nodeup_filename="${nodeup_urls[0]##*/}"
-  if [[ -n "${NODEUP_HASH:-}" ]]; then
-    local -r nodeup_hash="${NODEUP_HASH}"
+  local -r nodeup_urls=( $$(split-commas "$${NODEUP_URL}") )
+  local -r nodeup_filename="$${nodeup_urls[0]##*/}"
+  if [[ -n "$${NODEUP_HASH:-}" ]]; then
+    local -r nodeup_hash="$${NODEUP_HASH}"
   else
   # TODO: Remove?
     echo "Downloading sha1 (not found in env)"
-    download-or-bust "" "${nodeup_urls[@]/%/.sha1}"
-    local -r nodeup_hash=$(cat "${nodeup_filename}.sha1")
+    download-or-bust "" "$${nodeup_urls[@]/%/.sha1}"
+    local -r nodeup_hash=$$(cat "$${nodeup_filename}.sha1")
   fi
 
-  echo "Downloading nodeup (${nodeup_urls[@]})"
-  download-or-bust "${nodeup_hash}" "${nodeup_urls[@]}"
+  echo "Downloading nodeup ($${nodeup_urls[@]})"
+  download-or-bust "$${nodeup_hash}" "$${nodeup_urls[@]}"
 
   chmod +x nodeup
 }
@@ -129,7 +129,7 @@ function download-release() {
 
   echo "Running nodeup"
   # We can't run in the foreground because of https://github.com/docker/docker/issues/23793
-  ( cd ${INSTALL_DIR}; ./nodeup --install-systemd-unit --conf=${INSTALL_DIR}/kube_env.yaml --v=8  )
+  ( cd $${INSTALL_DIR}; ./nodeup --install-systemd-unit --conf=$${INSTALL_DIR}/kube_env.yaml --v=8  )
 }
 
 ####################################################################################
@@ -152,7 +152,7 @@ docker:
   storage: overlay,aufs
   version: 17.03.2
 kubeProxy:
-  clusterCIDR: 172.31.128.0/17
+  clusterCIDR: ${kube_proxy_cidr}
   cpuRequest: 100m
   hostnameOverride: '@aws'
   image: k8s.gcr.io/kube-proxy:v1.10.11
@@ -161,7 +161,7 @@ kubelet:
   allowPrivileged: true
   cgroupRoot: /
   cloudProvider: aws
-  clusterDNS: 172.31.0.10
+  clusterDNS: ${cluster_dns_ip}
   clusterDomain: cluster.local
   enableDebuggingHandlers: true
   evictionHard: memory.available<100Mi,nodefs.available<10%,nodefs.inodesFree<5%,imagefs.available<10%,imagefs.inodesFree<5%
@@ -171,7 +171,7 @@ kubelet:
   kubeconfigPath: /var/lib/kubelet/kubeconfig
   logLevel: 2
   networkPluginName: cni
-  nonMasqueradeCIDR: 172.31.0.0/16
+  nonMasqueradeCIDR: ${vpc_cidr_block}
   podInfraContainerImage: k8s.gcr.io/pause-amd64:3.0
   podManifestPath: /etc/kubernetes/manifests
 
@@ -192,14 +192,14 @@ Assets:
 - 9ee2f78491cbf8dc76d644c23cfc8c955c34d55d@https://storage.googleapis.com/kubernetes-release/release/v1.10.11/bin/linux/amd64/kubectl
 - d595d3ded6499a64e8dac02466e2f5f2ce257c9f@https://storage.googleapis.com/kubernetes-release/network-plugins/cni-plugins-amd64-v0.6.0.tgz
 - 4437924416536bc6e0c9e84df9851e67b4395728@https://kubeupv2.s3.amazonaws.com/kops/1.10.1/linux/amd64/utils.tar.gz
-ClusterName: one.colabit.store
-ConfigBase: s3://sds-kops-state-test/one.colabit.store
+ClusterName: ${cluster_name}
+ConfigBase: s3://${s3_bucket}/${cluster_name}
 InstanceGroupName: nodes
 Tags:
 - _automatic_upgrades
 - _aws
 channels:
-- s3://sds-kops-state-test/one.colabit.store/addons/bootstrap-channel.yaml
+- s3://${s3_bucket}/${cluster_name}/addons/bootstrap-channel.yaml
 protokubeImage:
   hash: 92e123824a7b5eaada94cd1aebea42b91f1baed7
   name: protokube:1.10.1

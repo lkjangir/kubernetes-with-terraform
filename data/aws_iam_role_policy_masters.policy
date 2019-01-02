@@ -46,7 +46,7 @@
       ],
       "Condition": {
         "StringEquals": {
-          "ec2:ResourceTag/KubernetesCluster": "one.colabit.store"
+          "ec2:ResourceTag/KubernetesCluster": "${cluster_name}"
         }
       }
     },
@@ -73,7 +73,7 @@
       ],
       "Condition": {
         "StringEquals": {
-          "autoscaling:ResourceTag/KubernetesCluster": "one.colabit.store"
+          "autoscaling:ResourceTag/KubernetesCluster": "${cluster_name}"
         }
       }
     },
@@ -140,7 +140,7 @@
         "s3:ListBucket"
       ],
       "Resource": [
-        "arn:aws:s3:::sds-kops-state-test"
+        "arn:aws:s3:::${s3_bucket}"
       ]
     },
     {
@@ -148,7 +148,7 @@
       "Action": [
         "s3:Get*"
       ],
-      "Resource": "arn:aws:s3:::sds-kops-state-test/one.colabit.store/*"
+      "Resource": "arn:aws:s3:::${s3_bucket}/${cluster_name}/*"
     },
     {
       "Effect": "Allow",
@@ -158,7 +158,7 @@
         "route53:GetHostedZone"
       ],
       "Resource": [
-        "arn:aws:route53:::hostedzone/Z3OZL4CQM1ZIPC"
+        "arn:aws:route53:::hostedzone/${r53_zone_id}"
       ]
     },
     {
